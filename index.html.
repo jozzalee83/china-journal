@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Travel Scrapbook</title>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #fdfbf7; /* Off-white paper color */
+            font-family: sans-serif;
+            overflow: hidden; /* Prevents the whole screen from scrolling */
+        }
+
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* The floating toolbar at the bottom */
+        #toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        button, label {
+            background: #e2e8f0;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        /* Hide the ugly default file input */
+        input[type="file"] {
+            display: none;
+        }
+
+        /* The style for items added to the canvas */
+        .scrapbook-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            padding: 10px;
+            background: white;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            touch-action: none; /* Required for interact.js */
+            user-select: none;
+        }
+
+        .scrapbook-item img {
+            max-width: 200px;
+            display: block;
+        }
+
+        .scrapbook-item p {
+            margin: 0;
+            font-size: 18px;
+            outline: none; /* For editing text */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas"></div>
+
+    <div id="toolbar">
+        <button onclick="addText()">Add Text</button>
+        <label for="imageUpload">Add Photo</label>
+        <input type="file" id="imageUpload" accept="image/*" onchange="addImage(event)">
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+
+        // Function to add a sticky note / text box
+        function addText() {
+            const el = document.createElement('div');
+            el.className = 'scrapbook-item draggable';
+            el.innerHTML = '<p contenteditable="true">Tap to type...</p>';
+            
+            // Set initial position data
+            el.setAttribute('data-x', 0);
+            el.setAttribute('data-y', 0);
+            
+            canvas.appendChild(el);
+        }
+
+        // Function to add an uploaded image
+        function addImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const el = document.createElement('div');
+                    el.className = 'scrapbook-item draggable';
+                    el.innerHTML = `<img src="${e.target.result}" alt="scrapbook photo">`;
+                    
+                    // Set initial position data
+                    el.setAttribute('data-x', 0);
+                    el.setAttribute('data-y', 0);
+                    
+                    canvas.appendChild(el);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // The Interact.js magic that makes things draggable
+        interact('.draggable').draggable({
+            listeners: {
+                start (event) {
+                    // Bring the dragged item to the front
+                    const items = document.querySelectorAll('.scrapbook-item');
+                    items.forEach(item => item.style.zIndex = 1);
+                    event.target.style.zIndex = 2;
+                },
+                move (event) {
+                    const target = event.target;
+                    // keep the dragged position in the data-x/data-y attributes
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    // translate the element
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+
+                    // update the posiion attributes
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
