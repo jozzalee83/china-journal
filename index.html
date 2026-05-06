@@ -20,6 +20,19 @@
             position: relative;
         }
 
+        /* Page number indicator in the top right */
+        #pageIndicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: #555;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
         #toolbar {
             position: fixed;
             bottom: 20px;
@@ -74,6 +87,7 @@
 </head>
 <body>
 
+    <div id="pageIndicator">Page 1</div>
     <div id="canvas"></div>
 
     <div id="toolbar">
@@ -84,18 +98,28 @@
     </div>
 
     <script>
+        // 1. Read the page number from the URL (default to 1 if missing)
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageNum = urlParams.get('page') || '1';
+        
+        // 2. Create a unique filing cabinet name for this specific page
+        const storageKey = 'journalPage_' + pageNum;
+
+        // 3. Update the visual indicator on the screen
+        document.getElementById('pageIndicator').innerText = 'Page ' + pageNum;
+
         const canvas = document.getElementById('canvas');
 
-        // Function to save the canvas to Local Storage
+        // Update the save function to use the unique page key
         function savePage() {
             const canvasContent = canvas.innerHTML;
-            localStorage.setItem('journalPage1', canvasContent);
-            alert("Scrapbook page saved!");
+            localStorage.setItem(storageKey, canvasContent);
+            alert("Page " + pageNum + " saved!");
         }
 
-        // Function that runs automatically when the page loads
+        // Update the load function to look for the unique page key
         window.onload = function() {
-            const savedContent = localStorage.getItem('journalPage1');
+            const savedContent = localStorage.getItem(storageKey);
             if (savedContent) {
                 canvas.innerHTML = savedContent;
             }
@@ -119,11 +143,9 @@
                 reader.onload = function(e) {
                     const img = new Image();
                     img.onload = function() {
-                        // Create an invisible canvas to resize the image
                         const tempCanvas = document.createElement('canvas');
                         const ctx = tempCanvas.getContext('2d');
 
-                        // Set maximum width
                         const MAX_WIDTH = 600;
                         let width = img.width;
                         let height = img.height;
@@ -136,11 +158,9 @@
                         tempCanvas.width = width;
                         tempCanvas.height = height;
 
-                        // Draw and compress the image
                         ctx.drawImage(img, 0, 0, width, height);
                         const compressedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.7);
 
-                        // Add it to the scrapbook
                         const el = document.createElement('div');
                         el.className = 'scrapbook-item draggable';
                         el.innerHTML = `<img src="${compressedDataUrl}" alt="scrapbook photo">`;
