@@ -9,9 +9,9 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #fdfbf7; /* Off-white paper color */
+            background-color: #fdfbf7; 
             font-family: sans-serif;
-            overflow: hidden; /* Prevents the whole screen from scrolling */
+            overflow: hidden; 
         }
 
         #canvas {
@@ -20,7 +20,6 @@
             position: relative;
         }
 
-        /* The floating toolbar at the bottom */
         #toolbar {
             position: fixed;
             bottom: 20px;
@@ -46,12 +45,10 @@
             touch-action: manipulation;
         }
 
-        /* Hide the ugly default file input */
         input[type="file"] {
             display: none;
         }
 
-        /* The style for items added to the canvas */
         .scrapbook-item {
             position: absolute;
             top: 50%;
@@ -59,7 +56,7 @@
             padding: 10px;
             background: white;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            touch-action: none; /* Required for interact.js */
+            touch-action: none; 
             user-select: none;
         }
 
@@ -71,7 +68,7 @@
         .scrapbook-item p {
             margin: 0;
             font-size: 18px;
-            outline: none; /* For editing text */
+            outline: none; 
         }
     </style>
 </head>
@@ -79,50 +76,39 @@
 
     <div id="canvas"></div>
 
-        <div id="toolbar">
+    <div id="toolbar">
         <button onclick="addText()">Add Text</button>
         <label for="imageUpload">Add Photo</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="addImage(event)">
         <button onclick="savePage()" style="background: #a3b18a; color: white;">Save</button>
     </div>
 
-            
-    
-
-
     <script>
-                // Function to save the canvas to Local Storage
+        // THIS IS THE LINE THAT WENT MISSING!
+        const canvas = document.getElementById('canvas');
+
+        // Function to save the canvas to Local Storage
         function savePage() {
-            // Grab the entire HTML content of the canvas
             const canvasContent = canvas.innerHTML;
-            // Save it to the browser's local storage under the name 'journalPage1'
             localStorage.setItem('journalPage1', canvasContent);
-            // Give her a little confirmation pop-up
             alert("Scrapbook page saved!");
         }
 
         // Function that runs automatically when the page loads
         window.onload = function() {
-            // Look inside local storage for our saved page
             const savedContent = localStorage.getItem('journalPage1');
-            // If there is saved content, put it back on the canvas
             if (savedContent) {
                 canvas.innerHTML = savedContent;
             }
         };
-
-        const canvas = document.getElementById('canvas');
 
         // Function to add a sticky note / text box
         function addText() {
             const el = document.createElement('div');
             el.className = 'scrapbook-item draggable';
             el.innerHTML = '<p contenteditable="true">Tap to type...</p>';
-            
-            // Set initial position data
             el.setAttribute('data-x', 0);
             el.setAttribute('data-y', 0);
-            
             canvas.appendChild(el);
         }
 
@@ -135,11 +121,8 @@
                     const el = document.createElement('div');
                     el.className = 'scrapbook-item draggable';
                     el.innerHTML = `<img src="${e.target.result}" alt="scrapbook photo">`;
-                    
-                    // Set initial position data
                     el.setAttribute('data-x', 0);
                     el.setAttribute('data-y', 0);
-                    
                     canvas.appendChild(el);
                 }
                 reader.readAsDataURL(file);
@@ -150,21 +133,15 @@
         interact('.draggable').draggable({
             listeners: {
                 start (event) {
-                    // Bring the dragged item to the front
                     const items = document.querySelectorAll('.scrapbook-item');
                     items.forEach(item => item.style.zIndex = 1);
                     event.target.style.zIndex = 2;
                 },
                 move (event) {
                     const target = event.target;
-                    // keep the dragged position in the data-x/data-y attributes
                     const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                     const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                    // translate the element
                     target.style.transform = `translate(${x}px, ${y}px)`;
-
-                    // update the posiion attributes
                     target.setAttribute('data-x', x);
                     target.setAttribute('data-y', y);
                 }
