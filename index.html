@@ -79,11 +79,14 @@
 
     <div id="canvas"></div>
 
-    <div id="toolbar">
+        <div id="toolbar">
         <button onclick="addText()">Add Text</button>
         <label for="imageUpload">Add Photo</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="addImage(event)">
+        <button onclick="savePage()" style="background: #a3b18a; color: white;">Save</button>
     </div>
+
+
 
     <script>
         const canvas = document.getElementById('canvas');
