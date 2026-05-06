@@ -86,9 +86,31 @@
         <button onclick="savePage()" style="background: #a3b18a; color: white;">Save</button>
     </div>
 
+            
+    
 
 
     <script>
+                // Function to save the canvas to Local Storage
+        function savePage() {
+            // Grab the entire HTML content of the canvas
+            const canvasContent = canvas.innerHTML;
+            // Save it to the browser's local storage under the name 'journalPage1'
+            localStorage.setItem('journalPage1', canvasContent);
+            // Give her a little confirmation pop-up
+            alert("Scrapbook page saved!");
+        }
+
+        // Function that runs automatically when the page loads
+        window.onload = function() {
+            // Look inside local storage for our saved page
+            const savedContent = localStorage.getItem('journalPage1');
+            // If there is saved content, put it back on the canvas
+            if (savedContent) {
+                canvas.innerHTML = savedContent;
+            }
+        };
+
         const canvas = document.getElementById('canvas');
 
         // Function to add a sticky note / text box
