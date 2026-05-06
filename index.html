@@ -9,53 +9,62 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #fdfbf7; 
             font-family: sans-serif;
             overflow: hidden; 
+            background-color: #2c2c2c; /* Dark background behind the canvas */
         }
 
         #canvas {
             width: 100vw;
             height: 100vh;
             position: relative;
+            background: #fdfbf7; /* Default canvas color */
+            transition: background 0.3s;
         }
 
-        /* Page number indicator in the top right */
+        /* Page number indicator */
         #pageIndicator {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.8);
             padding: 5px 15px;
             border-radius: 15px;
-            color: #555;
+            color: #333;
             font-weight: bold;
             z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        /* Mobile-friendly toolbar that wraps */
         #toolbar {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 90%;
+            max-width: 400px;
             z-index: 1000;
         }
 
         button, label {
             background: #e2e8f0;
             border: none;
-            padding: 10px 15px;
-            border-radius: 15px;
+            padding: 8px 12px;
+            border-radius: 10px;
             font-weight: bold;
             color: #333;
             cursor: pointer;
             touch-action: manipulation;
+            font-size: 14px;
         }
 
         input[type="file"] {
@@ -64,25 +73,42 @@
 
         .scrapbook-item {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 40%;
+            left: 40%;
             padding: 10px;
-            background: white;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            background: transparent;
             touch-action: none; 
             user-select: none;
         }
 
+        /* The new Polaroid Frame look */
         .scrapbook-item img {
             max-width: 200px;
             display: block;
+            background: white;
+            padding: 10px 10px 30px 10px; /* Thicker padding on bottom */
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+            border-radius: 2px;
         }
 
         .scrapbook-item p {
             margin: 0;
-            font-size: 18px;
+            font-size: 20px;
             outline: none; 
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
         }
+        
+        /* Sticker styling */
+        .scrapbook-item h1 {
+            margin: 0;
+            font-size: 40px;
+            outline: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
     </style>
 </head>
 <body>
@@ -91,51 +117,70 @@
     <div id="canvas"></div>
 
     <div id="toolbar">
-        <button onclick="addText()">Add Text</button>
-        <label for="imageUpload">Add Photo</label>
+        <button onclick="addText()">Text</button>
+        <label for="imageUpload">Photo</label>
         <input type="file" id="imageUpload" accept="image/*" onchange="addImage(event)">
+        <button onclick="addDecor()">Decor</button>
+        <button onclick="changeBg()">Bg</button>
+        <button id="lockBtn" onclick="toggleLock()">Lock</button>
+        <button onclick="sharePage()">Share</button>
         <button onclick="savePage()" style="background: #a3b18a; color: white;">Save</button>
     </div>
 
     <script>
-        // 1. Read the page number from the URL (default to 1 if missing)
         const urlParams = new URLSearchParams(window.location.search);
         const pageNum = urlParams.get('page') || '1';
-        
-        // 2. Create a unique filing cabinet name for this specific page
         const storageKey = 'journalPage_' + pageNum;
-
-        // 3. Update the visual indicator on the screen
+        const bgStorageKey = 'journalBg_' + pageNum;
+        
         document.getElementById('pageIndicator').innerText = 'Page ' + pageNum;
-
         const canvas = document.getElementById('canvas');
 
-        // Update the save function to use the unique page key
-        function savePage() {
-            const canvasContent = canvas.innerHTML;
-            localStorage.setItem(storageKey, canvasContent);
-            alert("Page " + pageNum + " saved!");
+        // --- BACKGROUND LOGIC ---
+        const backgrounds = [
+            '#fdfbf7', // Plain off-white
+            'repeating-linear-gradient(#fdfbf7, #fdfbf7 29px, #d1d5db 30px)', // Lined paper
+            'repeating-linear-gradient(#fdfbf7 0 19px, #e5e7eb 20px), repeating-linear-gradient(90deg, #fdfbf7 0 19px, #e5e7eb 20px)', // Grid paper
+            '#d9e2d5' // Soft sage green
+        ];
+        let bgIndex = 0;
+
+        function changeBg() {
+            bgIndex = (bgIndex + 1) % backgrounds.length;
+            canvas.style.background = backgrounds[bgIndex];
         }
 
-        // Update the load function to look for the unique page key
+        // --- SAVE & LOAD LOGIC ---
+        function savePage() {
+            localStorage.setItem(storageKey, canvas.innerHTML);
+            localStorage.setItem(bgStorageKey, canvas.style.background); // Save the chosen background
+            alert("Page " + pageNum + " saved securely to your phone!");
+        }
+
         window.onload = function() {
             const savedContent = localStorage.getItem(storageKey);
-            if (savedContent) {
-                canvas.innerHTML = savedContent;
-            }
+            const savedBg = localStorage.getItem(bgStorageKey);
+            
+            if (savedContent) canvas.innerHTML = savedContent;
+            if (savedBg) canvas.style.background = savedBg;
         };
 
-        // Function to add a sticky note / text box
+        // --- ADDING ITEMS ---
         function addText() {
-            const el = document.createElement('div');
-            el.className = 'scrapbook-item draggable';
-            el.innerHTML = '<p contenteditable="true">Tap to type...</p>';
-            el.setAttribute('data-x', 0);
-            el.setAttribute('data-y', 0);
-            canvas.appendChild(el);
+            createItem('<p contenteditable="true">Tap to edit text...</p>');
         }
 
-        // Function to add and compress an uploaded image
+        function addDecor() {
+            const decorOptions = ['✈️', '🏮', '🐼', '🍜', '📸', '🗺️', '<p contenteditable="true" style="font-family:serif; font-style:italic;">"Adventure is out there!"</p>'];
+            const randomDecor = decorOptions[Math.floor(Math.random() * decorOptions.length)];
+            
+            if(randomDecor.includes('<p>')) {
+                createItem(randomDecor);
+            } else {
+                createItem(`<h1 contenteditable="true">${randomDecor}</h1>`);
+            }
+        }
+
         function addImage(event) {
             const file = event.target.files[0];
             if (file) {
@@ -145,7 +190,6 @@
                     img.onload = function() {
                         const tempCanvas = document.createElement('canvas');
                         const ctx = tempCanvas.getContext('2d');
-
                         const MAX_WIDTH = 600;
                         let width = img.width;
                         let height = img.height;
@@ -157,16 +201,11 @@
 
                         tempCanvas.width = width;
                         tempCanvas.height = height;
-
                         ctx.drawImage(img, 0, 0, width, height);
                         const compressedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.7);
 
-                        const el = document.createElement('div');
-                        el.className = 'scrapbook-item draggable';
-                        el.innerHTML = `<img src="${compressedDataUrl}" alt="scrapbook photo">`;
-                        el.setAttribute('data-x', 0);
-                        el.setAttribute('data-y', 0);
-                        canvas.appendChild(el);
+                        // The CSS automatically applies the Polaroid frame!
+                        createItem(`<img src="${compressedDataUrl}" alt="scrapbook photo">`);
                     };
                     img.src = e.target.result;
                 }
@@ -174,7 +213,43 @@
             }
         }
 
-        // The Interact.js magic that makes things draggable
+        // Helper function to drop items onto the canvas
+        function createItem(htmlContent) {
+            if (isLocked) {
+                alert("Unlock the canvas first to add items!");
+                return;
+            }
+            const el = document.createElement('div');
+            el.className = 'scrapbook-item draggable';
+            el.innerHTML = htmlContent;
+            el.setAttribute('data-x', 0);
+            el.setAttribute('data-y', 0);
+            
+            // Give it a slightly random rotation for a natural scrapbook feel
+            const randomRotation = Math.floor(Math.random() * 10) - 5;
+            el.style.transform = `translate(0px, 0px) rotate(${randomRotation}deg)`;
+            
+            canvas.appendChild(el);
+        }
+
+        // --- LOCK LAYER LOGIC ---
+        let isLocked = false;
+        function toggleLock() {
+            isLocked = !isLocked;
+            const lockBtn = document.getElementById('lockBtn');
+            lockBtn.innerText = isLocked ? "Unlock" : "Lock";
+            lockBtn.style.background = isLocked ? "#ff9999" : "#e2e8f0"; // Turns red when locked
+            
+            // Enable or disable dragging
+            interact('.draggable').draggable({ enabled: !isLocked });
+        }
+
+        // --- SHARE LOGIC ---
+        function sharePage() {
+            alert("📸 Since this journal is totally private and saved only to your phone, the best way to share this masterpiece is to take a screenshot!");
+        }
+
+        // --- DRAG LOGIC ---
         interact('.draggable').draggable({
             listeners: {
                 start (event) {
@@ -186,7 +261,13 @@
                     const target = event.target;
                     const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                     const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                    target.style.transform = `translate(${x}px, ${y}px)`;
+                    
+                    // Keep the existing rotation while dragging
+                    const transformStr = target.style.transform;
+                    const rotationMatch = transformStr.match(/rotate\((.*?)\)/);
+                    const currentRotation = rotationMatch ? rotationMatch[1] : '0deg';
+
+                    target.style.transform = `translate(${x}px, ${y}px) rotate(${currentRotation})`;
                     target.setAttribute('data-x', x);
                     target.setAttribute('data-y', y);
                 }
